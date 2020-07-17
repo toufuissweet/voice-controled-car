@@ -1,0 +1,55 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\11793\Desktop\无线模块程序\接收\STC89Cxx-NRF24L01-TEST(1).uvproj
+Project File Date:  06/04/2019
+
+<h2>Output:</h2>
+compiling STC89Cxx-NRF24L01-TEST.C...
+STC89CXX-NRF24L01-TEST.C(378): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(386): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(396): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(405): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(414): warning C290: missing return value
+STC89Cxx-NRF24L01-TEST.C - 0 Error(s), 5 Warning(s).
+Build target 'Target 1'
+compiling STC89Cxx-NRF24L01-TEST.C...
+STC89CXX-NRF24L01-TEST.C(378): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(386): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(396): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(405): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(414): warning C290: missing return value
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_NRF24L01_TXPACKET?STC89CXX_NRF24L01_TEST
+Program Size: data=111.0 xdata=0 code=1002
+creating hex file from "STC89Cxx-NRF24L01-TEST"...
+"STC89Cxx-NRF24L01-TEST" - 0 Error(s), 6 Warning(s).
+Build target 'Target 1'
+compiling STC89Cxx-NRF24L01-TEST.C...
+STC89CXX-NRF24L01-TEST.C(378): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(386): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(396): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(405): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(414): warning C290: missing return value
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_NRF24L01_TXPACKET?STC89CXX_NRF24L01_TEST
+Program Size: data=111.0 xdata=0 code=1002
+creating hex file from "STC89Cxx-NRF24L01-TEST"...
+"STC89Cxx-NRF24L01-TEST" - 0 Error(s), 6 Warning(s).
+Build target 'Target 1'
+compiling STC89Cxx-NRF24L01-TEST.C...
+STC89CXX-NRF24L01-TEST.C(378): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(386): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(396): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(405): warning C290: missing return value
+STC89CXX-NRF24L01-TEST.C(414): warning C290: missing return value
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_NRF24L01_TXPACKET?STC89CXX_NRF24L01_TEST
+Program Size: data=111.0 xdata=0 code=1002
+creating hex file from "STC89Cxx-NRF24L01-TEST"...
+"STC89Cxx-NRF24L01-TEST" - 0 Error(s), 6 Warning(s).

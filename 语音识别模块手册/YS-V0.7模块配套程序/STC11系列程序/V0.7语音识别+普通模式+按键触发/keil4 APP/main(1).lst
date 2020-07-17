@@ -1,0 +1,265 @@
+C51 COMPILER V9.00   MAIN                                                                  10/11/2013 17:14:34 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN ..\obj\main.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\code\main.c BROWSE INCDIR(..\code;..\user) DEBUG OBJECTEXTEND PRINT(.\ma
+                    -in.lst) OBJECT(..\obj\main.obj)
+
+line level    source
+
+   1          /***************************飞音云电子****************************
+   2          **  工程名称：YS-V0.7语音识别模块驱动程序
+   3          **      CPU: STC11L08XE
+   4          **      晶振：22.1184MHZ
+   5          **      波特率：9600 bit/S
+   6          **      配套产品信息：YS-V0.7语音识别开发板
+   7          **                http://yuesheng001.taobao.com
+   8          **  作者：zdings
+   9          **  联系：751956552@qq.com
+  10          **  修改日期：2013.9.13
+  11          **  说明：普通+按键触发模式： 即每次识别时都需要说“小杰”这个口令 ，才能够进行下一级的识别
+  12          /***************************飞音云电子******************************/
+  13          #include "config.h"
+  14          /************************************************************************************/
+  15          //      nAsrStatus 用来在main主程序中表示程序运行的状态，不是LD3320芯片内部的状态寄存器
+  16          //      LD_ASR_NONE:            表示没有在作ASR识别
+  17          //      LD_ASR_RUNING：         表示LD3320正在作ASR识别中
+  18          //      LD_ASR_FOUNDOK:         表示一次识别流程结束后，有一个识别结果
+  19          //      LD_ASR_FOUNDZERO:       表示一次识别流程结束后，没有识别结果
+  20          //      LD_ASR_ERROR:           表示一次识别流程中LD3320芯片内部出现不正确的状态
+  21          /***********************************************************************************/
+  22          uint8 idata nAsrStatus=0;       
+  23          void MCU_init(); 
+  24          void ProcessInt0(); //识别处理函数
+  25          void  delay(unsigned long uldata);
+  26          void    User_handle(uint8 dat);//用户执行操作函数
+  27          void Led_test(void);//单片机工作指示
+  28          uint8_t G0_flag=DISABLE;//运行标志，ENABLE:运行。DISABLE:禁止运行 
+  29          sbit LED=P4^2;//信号指示灯
+  30          void Delay200ms();
+  31          sbit CMD_KE=P4^1;//触发按键
+  32          
+  33          /***********************************************************
+  34          * 名    称： void  main(void)
+  35          * 功    能： 主函数     程序入口
+  36          * 入口参数：  
+  37          * 出口参数：
+  38          * 说    明：                                     
+  39          * 调用方法： 
+  40          **********************************************************/ 
+  41          void  main(void)
+  42          {
+  43   1              uint8 idata nAsrRes;
+  44   1              uint8 i=0;
+  45   1              Led_test();
+  46   1              MCU_init();
+  47   1              LD_Reset();
+  48   1              UartIni(); /*串口初始化*/
+  49   1              nAsrStatus = LD_ASR_NONE;               //      初始状态：没有在作ASR
+  50   1              
+  51   1              #ifdef TEST
+  52   1              
+  53   1              PrintCom("串口运行中....\r\n"); /*text.....*/
+  54   1              PrintCom("口令：1、代码测试\r\n"); /*text.....*/
+C51 COMPILER V9.00   MAIN                                                                  10/11/2013 17:14:34 PAGE 2   
+
+  55   1              PrintCom("      2、开发板验证\r\n"); /*text.....*/
+  56   1              PrintCom("      3、开灯\r\n"); /*text.....*/
+  57   1              PrintCom("      4、关灯\r\n"); /*text.....*/
+  58   1              PrintCom("    5、北京\r\n"); /*text.....*/
+  59   1              PrintCom("      6、上海\r\n"); /*text.....*/
+  60   1              PrintCom("      7、广州\r\n"); /*text.....*/
+  61   1              #endif
+  62   1      
+  63   1              while(1)
+  64   1              {
+  65   2                      switch(nAsrStatus)
+  66   2                      {
+  67   3                              case LD_ASR_RUNING:
+  68   3                              case LD_ASR_ERROR:              
+  69   3                                      break;
+  70   3                              case LD_ASR_NONE:
+  71   3                              {
+  72   4                                      nAsrStatus=LD_ASR_RUNING;
+  73   4                                      if (RunASR()==0)        /*      启动一次ASR识别流程：ASR初始化，ASR添加关键词语，启动ASR运算*/
+  74   4                                      {
+  75   5                                              nAsrStatus = LD_ASR_ERROR;
+  76   5                                      }
+  77   4                                      break;
+  78   4                              }
+  79   3                              case LD_ASR_FOUNDOK: /* 一次ASR识别流程结束，去取ASR识别结果*/
+  80   3                              {                               
+  81   4                                      nAsrRes = LD_GetResult();               /*获取结果*/
+  82   4                                      User_handle(nAsrRes);//用户执行函数 
+  83   4                                      nAsrStatus = LD_ASR_NONE;
+  84   4                                      break;
+  85   4                              }
+  86   3                              case LD_ASR_FOUNDZERO:
+  87   3                              default:
+  88   3                              {
+  89   4                                      nAsrStatus = LD_ASR_NONE;
+  90   4                                      break;
+  91   4                              }
+  92   3                      }// switch                              
+  93   2              }// while
+  94   1      
+  95   1      }
+  96          /***********************************************************
+  97          * 名    称：     LED灯测试
+  98          * 功    能： 单片机是否工作指示
+  99          * 入口参数： 无 
+ 100          * 出口参数：无
+ 101          * 说    明：                                     
+ 102          **********************************************************/
+ 103          void Led_test(void)
+ 104          {
+ 105   1              LED=~ LED;
+ 106   1              Delay200ms();
+ 107   1              LED=~ LED;
+ 108   1              Delay200ms();
+ 109   1              LED=~ LED;
+ 110   1              Delay200ms();
+ 111   1              LED=~ LED;
+ 112   1              Delay200ms();
+ 113   1              LED=~ LED;
+ 114   1              Delay200ms();
+ 115   1              LED=~ LED;
+ 116   1      }
+C51 COMPILER V9.00   MAIN                                                                  10/11/2013 17:14:34 PAGE 3   
+
+ 117          /***********************************************************
+ 118          * 名    称： void MCU_init()
+ 119          * 功    能： 单片机初始化
+ 120          * 入口参数：  
+ 121          * 出口参数：
+ 122          * 说    明：                                     
+ 123          * 调用方法： 
+ 124          **********************************************************/ 
+ 125          void MCU_init()
+ 126          {
+ 127   1              P0 = 0xff;
+ 128   1              P1 = 0xff;
+ 129   1              P2 = 0xff;
+ 130   1              P3 = 0xff;
+ 131   1              P4 = 0xff;
+ 132   1              LD_MODE = 0;            //      设置MD管脚为低，并行模式读写
+ 133   1              IE0=1;
+ 134   1              EX0=1;
+ 135   1              EA=1;
+ 136   1      }
+ 137          /***********************************************************
+ 138          * 名    称：    延时函数
+ 139          * 功    能：
+ 140          * 入口参数：  
+ 141          * 出口参数：
+ 142          * 说    明：                                     
+ 143          * 调用方法： 
+ 144          **********************************************************/ 
+ 145          void Delay200us()               //@22.1184MHz
+ 146          {
+ 147   1              unsigned char i, j;
+ 148   1              _nop_();
+ 149   1              _nop_();
+ 150   1              i = 5;
+ 151   1              j = 73;
+ 152   1              do
+ 153   1              {
+ 154   2                      while (--j);
+ 155   2              } while (--i);
+ 156   1      }
+ 157          
+ 158          void  delay(unsigned long uldata)
+ 159          {
+ 160   1              unsigned int j  =  0;
+ 161   1              unsigned int g  =  0;
+ 162   1              while(uldata--)
+ 163   1              Delay200us();
+ 164   1      }
+ 165          
+ 166          void Delay200ms()               //@22.1184MHz
+ 167          {
+ 168   1              unsigned char i, j, k;
+ 169   1      
+ 170   1              i = 17;
+ 171   1              j = 208;
+ 172   1              k = 27;
+ 173   1              do
+ 174   1              {
+ 175   2                      do
+ 176   2                      {
+ 177   3                              while (--k);
+ 178   3                      } while (--j);
+C51 COMPILER V9.00   MAIN                                                                  10/11/2013 17:14:34 PAGE 4   
+
+ 179   2              } while (--i);
+ 180   1      }
+ 181          
+ 182          /***********************************************************
+ 183          * 名    称： 中断处理函数
+ 184          * 功    能：
+ 185          * 入口参数：  
+ 186          * 出口参数：
+ 187          * 说    明：                                     
+ 188          * 调用方法： 
+ 189          **********************************************************/ 
+ 190          void ExtInt0Handler(void) interrupt 0  
+ 191          {       
+ 192   1              ProcessInt0();                          /*      LD3320 送出中断信号，包括ASR和播放MP3的中断，需要在中断处理函数中分别处理*/
+ 193   1      }
+ 194          /***********************************************************
+ 195          * 名    称：用户执行函数 
+ 196          * 功    能：识别成功后，执行动作可在此进行修改 
+ 197          * 入口参数： 无 
+ 198          * 出口参数：无
+ 199          * 说    明：                                     
+ 200          **********************************************************/
+ 201          void    User_handle(uint8 dat)
+ 202          {
+ 203   1       if(CMD_KE==0)//按键按下。 只有当按键按下时才对识别结果进行处理
+ 204   1       {
+ 205   2           //UARTSendByte(dat);//串口识别码（十六进制）
+ 206   2      
+ 207   2                               switch(dat)               /*对结果执行相关操作,客户修改*/
+ 208   2                                {
+ 209   3                                        case CODE_DMCS:                       /*命令“测试”*/
+ 210   3                                                      PrintCom("“代码测试”命令识别成功\r\n"); /*text.....*/
+ 211   3                                                                                                               break;
+ 212   3                                              case CODE_KFBYZ:         /*命令“全开”*/
+ 213   3                                                      PrintCom("“开发板验证”命令识别成功\r\n"); /*text.....*/
+ 214   3                                                                                                               break;
+ 215   3                                              case CODE_KD:           /*命令“复位”*/                                
+ 216   3                                                      PrintCom("“开灯”命令识别成功\r\n"); /*text.....*/
+ 217   3                                                                                                              break;
+ 218   3                                              case CODE_GD:           /*命令“复位”*/                                
+ 219   3                                                      PrintCom("“关灯”命令识别成功\r\n"); /*text.....*/
+ 220   3                                                                                                              break;
+ 221   3                                              case CODE_BJ:           /*命令“复位”*/                                
+ 222   3                                                      PrintCom("“北京”命令识别成功\r\n"); /*text.....*/
+ 223   3                                                                                                              break;
+ 224   3                                              case CODE_SH:           /*命令“复位”*/                                
+ 225   3                                                      PrintCom("“上海”命令识别成功\r\n"); /*text.....*/
+ 226   3                                                                                                              break;
+ 227   3                                              case CODE_GZ:           /*命令“复位”*/                                
+ 228   3                                                      PrintCom("“广州”命令识别成功\r\n"); /*text.....*/
+ 229   3                                                                                                              break;                                                                                                                                                                                                                  
+ 230   3                                                              default:PrintCom("请重新识别发口令\r\n"); /*text.....*/break;
+ 231   3                                      }       
+ 232   2              }
+ 233   1      }        
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    414    ----
+   CONSTANT SIZE    =    302    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.00   MAIN                                                                  10/11/2013 17:14:34 PAGE 5   
+
+   DATA SIZE        =      1       9
+   IDATA SIZE       =      1       1
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
